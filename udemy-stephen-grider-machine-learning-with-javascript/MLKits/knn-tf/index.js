@@ -10,9 +10,15 @@ const loadCSV = require("./load-csv");
  * 4. find the average of the values
  */
 function knn(features, labels, predictionPoint, k) {
+  // tf.moments() => gives { mean, variance }
+  // Standard Deviation = sqrt(variance)
+  const { mean, variance } = tf.moments(features, 0);
+  const standardDeviation = variance.pow(0.5);
+  const scale = point => standardize(point, mean, standardDeviation);
+
   return (
-    features
-      .sub(predictionPoint)
+    scale(features)
+      .sub(scale(predictionPoint))
       .pow(2)
       .sum(1)
       .pow(0.5)
@@ -25,12 +31,17 @@ function knn(features, labels, predictionPoint, k) {
   );
 }
 
+// standardization = (value - average) / Standard Deviation
+function standardize(point, mean, standardDeviation) {
+  return point.sub(mean).div(standardDeviation);
+}
+
 let { features, labels, testFeatures, testLabels } = loadCSV(
   "kc_house_data.csv",
   {
     shuffle: true,
     splitTest: 10,
-    dataColumns: ["lat", "long"],
+    dataColumns: ["lat", "long", "sqft_lot"],
     labelColumns: ["price"]
   }
 );
